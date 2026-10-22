@@ -110,6 +110,27 @@ mode number is never dropped without mapping it to one that stays (see `RETIRED_
 `lib/vacuum.js`). Labels must be unique too: two slots set up the same get their slot name, e.g.
 "Mop, 1 pass (Quick)".
 
+## Room names
+
+The Home app shows your rooms by name, and the plugin gets those names from the robot, so name them in
+the **Narwal app** first:
+
+1. In the Narwal app, give each room its type or name (Kitchen, Bathroom, Master Bedroom, Living Room, …).
+   A room that has none is shown as "Room", "Room 2", "Room 3", …
+2. Restart the plugin's child bridge in the Homebridge UI to pick the change up right away. Without a
+   restart the plugin reads the robot's map again every few hours.
+3. Two rooms of the same type get a number: "Living Room" and "Living Room 2".
+
+Good to know:
+
+- The robot only describes the map it is on now, so rooms on another saved map keep their generic names
+  until the robot is on that map (see [Multiple floors](#multiple-floors-in-development)).
+- To show a name in the Home app that differs from the Narwal app's (say "Living Room 2" becomes
+  "Hallway"), set it in the plugin's settings: each robot's rooms are listed there with a name field.
+  A name set there always wins over the Narwal app's, and an empty field keeps the Narwal app's name.
+  In `config.json` it is `maps[].rooms[].name`, as in the example above.
+- Renaming a room doesn't affect Home scenes and automations that use it: they follow the room, not its name.
+
 ## Multiple floors (in development)
 
 > **Still in development.** Multi-floor support works in testing but isn't finished. Known gaps:
