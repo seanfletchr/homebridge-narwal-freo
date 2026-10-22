@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: Return to dock on a floor without a base could stay "Returning" for good if the robot stopped with
+  an error on the way (a missing dust bin, say): the Home app then showed the wrong state, Start was taken
+  for a Resume, and the Narwal app's "switch to the main map after cleaning" setting stayed off. The trip
+  back to the starting point now always ends: when the robot reports an error, is back on its base, hasn't
+  set off within a minute, or has been idle for a minute without finishing; and a new clean, or a Home app
+  Pause or Resume while nothing is really running, treats it as over. A room queue also ends when the
+  robot is on its base or reports an error between rooms.
+- On start-up the "switch to the main map" setting is turned back on if the plugin had turned it off and
+  the robot is idle.
+
 ## 0.6.1
 
 - Settings page: clean-mode options say Default again (Room setting didn't fit the Home UI's selects).
