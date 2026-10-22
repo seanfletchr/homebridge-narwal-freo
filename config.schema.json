@@ -37,6 +37,16 @@
           }
         ]
       },
+      "appVersion": {
+        "title": "Narwal app version (advanced)",
+        "description": "Only change this if sign-in starts failing because Narwal refuses the built-in app version. Leave empty otherwise.",
+        "type": "string"
+      },
+      "appVersionCode": {
+        "title": "Narwal app version code (advanced)",
+        "description": "Goes with the app version above. Leave empty unless you changed it.",
+        "type": "string"
+      },
       "robots": {
         "title": "Robots",
         "type": "array",
