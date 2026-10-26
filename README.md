@@ -79,6 +79,23 @@ The same settings in `config.json`:
 `disableIpv4` keeps Matter's mDNS off IPv4 so it doesn't compete with avahi, which advertises the
 HomeKit bridges.
 
+## First-time setup
+
+1. **Enable Matter on the plugin's child bridge** (externals only is enough) by adding a `matter` block to `_bridge`:
+
+   ```json
+   "_bridge": {
+     "username": "…",
+     "port": 51916,
+     "name": "Narwal Bridge",
+     "matter": { "enabled": false, "externalsOnly": true, "disableIpv4": true }
+   }
+   ```
+
+   Without it the log says `Matter is not enabled for this bridge` and no vacuum is published. Restart the child bridge after changing it.
+2. **Rooms.** From 0.6.0 the plugin loads the robot's rooms by itself. On older versions the log may say it is waiting for the room list; open the Narwal app on the robot's map for about a minute.
+3. **Pair the vacuum.** Once the log says the Freo is published as a Matter robot vacuum, it prints `Commissioning codes for …` (a QR code and a manual code) in the Homebridge log. In the Home app choose **+ > Add Accessory** and use that code. This pairing is separate from the Homebridge bridge's own HomeKit code.
+
 ## Clean modes in the Home app
 
 The Home app offers three choices, **Vacuum**, **Mop** and a combined one (named after its
