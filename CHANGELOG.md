@@ -11,6 +11,14 @@
   robot is on its base or reports an error between rooms.
 - On start-up the "switch to the main map" setting is turned back on if the plugin had turned it off and
   the robot is idle.
+- Fixed: on some Freos every room showed as "Room", "Room 2", … instead of its Narwal app name. Room
+  names now also come from the robot's current map, which carries them on every Freo. Room ids, and so
+  Home scenes and automations, don't change. README: new "Room names" section. (Thanks @linuxliam)
+- The log now says when the configured region is unknown, instead of signing in to the US region without
+  a word. (Thanks @linuxliam)
+- The "Matter is not enabled" error now shows the `matter` block to add to the child bridge. (Thanks
+  @linuxliam)
+- Development: a small test suite (`npm test`) and a GitHub Actions workflow. (Thanks @linuxliam)
 
 ## 0.6.1
 
