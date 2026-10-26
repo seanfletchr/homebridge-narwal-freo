@@ -18,6 +18,7 @@
   a word. (Thanks @linuxliam)
 - The "Matter is not enabled" error now shows the `matter` block to add to the child bridge. (Thanks
   @linuxliam)
+- README: new "First-time setup" section (enabling Matter, pairing the vacuum). (Thanks @linuxliam)
 - Development: a small test suite (`npm test`) and a GitHub Actions workflow. (Thanks @linuxliam)
 
 ## 0.6.1
