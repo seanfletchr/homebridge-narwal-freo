@@ -298,3 +298,12 @@ what happens in each situation, and the API for other plugins:
   battery, sensor — with Narwal's message as the details. Codes not in the table are routine
   notices (e.g. 0x01010072 during mop runs) and are ignored. The cloud work status (polled every
   3 minutes) is only used when live status isn't arriving.
+  The plugin also sets these standard errors itself, and they stay until resolved: failed to find
+  charging dock when the robot hasn't reached its base within about three times its usual return time
+  (10 minutes until it has learned one; an unplugged base station, say), low battery when it has stopped
+  answering away from its base, and unable to complete operation when it hasn't answered since start-up.
+
+
+## Known issues
+
+See the [open issues](https://github.com/seanfletchr/homebridge-narwal-freo/issues).

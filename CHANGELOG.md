@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- New: the tile shows an error, and the log a warning, when the Freo can't get back to its base. After
+  a clean, Return to dock or a mop wash the robot is expected home within a few times its usual time (the
+  plugin learns this from your earlier returns; 10 minutes until it has), so an unplugged base station
+  or a blocked path now shows "Failed to find charging dock" instead of a tile that keeps saying
+  Returning. The error clears when the robot reaches the base or starts something new.
+- New: the tile shows an error when the robot stops answering. A robot that goes quiet while away from its
+  base is woken once and then shown with a low battery error (its battery has most likely run flat), also
+  after a Homebridge restart; one that hasn't answered at all since Homebridge started shows "unable to
+  complete operation" instead of Ready. It clears as soon as the robot reports again.
+- Fixed: a robot charging from 0% showed 100% (and Docked instead of Charging) in the Home app.
+- Fixed: after a restart the Home app could show 100% and not charging until the next restart: the vacuum was
+  published with made-up starting values. It is now published from the robot's first status (battery unknown
+  if the robot hasn't reported within 30 seconds).
+- Fixed: a robot charging in its base could show as Stopped and not charging when it didn't send its docked flag.
 - Fixed: Return to dock on a floor without a base could stay "Returning" for good if the robot stopped with
   an error on the way (a missing dust bin, say): the Home app then showed the wrong state, Start was taken
   for a Resume, and the Narwal app's "switch to the main map after cleaning" setting stayed off. The trip
