@@ -336,9 +336,6 @@
       const map = list.find(m => Number(m.id) === mapId) ?? { id: mapId };
       fn(map);
       map.rooms = (map.rooms ?? []).filter(r => r.name || typeof r.stairDetection === 'boolean');
-      if (!map.roomOrder?.length) {
-        delete map.roomOrder;
-      }
       if (!map.rooms.length) {
         delete map.rooms;
       }
@@ -389,19 +386,6 @@
     let floorOn = saved.stairDetection !== false;
     const followers = [];
     const roomRows = el('tbody');
-    // Cleaning order of a secondary map's rooms: the ids in order (no duplicates); rooms left on Auto come after.
-    const orderable = !map.hasDock && map.rooms.length > 1;
-    const known = new Set(map.rooms.map(r => r.id));
-    const ordered = [...new Set((saved.roomOrder ?? []).map(Number))].filter(id => known.has(id));
-    const orderSelects = new Map();
-    const showOrder = () => {
-      for (const [id, select] of orderSelects) {
-        select.value = String(ordered.indexOf(id) + 1); // 0 = Auto
-      }
-    };
-    const saveOrder = () => setMap(serial, map.id, (m) => {
-      if (ordered.length) { m.roomOrder = [...ordered]; } else { delete m.roomOrder; }
-    });
     for (const room of map.rooms) {
       const savedRoom = saved.rooms?.find(r => Number(r.id) === room.id);
       const cells = [
@@ -410,22 +394,6 @@
           if (name) { r.name = name; } else { delete r.name; }
         }))),
       ];
-      if (orderable) {
-        const select = el('select', { className: 'form-control form-control-sm', title: `Cleaning order of ${room.name}` },
-          el('option', { value: '0', textContent: 'Auto' }),
-          ...map.rooms.map((_, i) => el('option', { value: String(i + 1), textContent: String(i + 1) })));
-        select.setAttribute('aria-label', `Cleaning order of ${room.name}`);
-        orderSelects.set(room.id, select);
-        select.addEventListener('change', () => {
-          const n = Number(select.value);
-          const at = ordered.indexOf(room.id);
-          if (at >= 0) { ordered.splice(at, 1); }
-          if (n >= 1) { ordered.splice(Math.min(n - 1, ordered.length), 0, room.id); }
-          showOrder();
-          return saveOrder();
-        });
-        cells.push(el('td', {}, select));
-      }
       if (several) {
         const box = el('input', { className: 'form-check-input', type: 'checkbox', title: `Detect stairs in ${room.name}`,
           checked: typeof savedRoom?.stairDetection === 'boolean' ? savedRoom.stairDetection : floorOn });
@@ -442,16 +410,12 @@
       }
       roomRows.append(el('tr', {}, ...cells));
     }
-    showOrder();
     const heads = [el('th', { textContent: 'Narwal app' }), el('th', { textContent: 'Home app' })];
-    if (orderable) {
-      heads.push(el('th', { textContent: 'Order' }));
-    }
     if (several) {
       heads.push(el('th', { className: 'text-center', textContent: 'Detect stairs' }));
     }
     const table = el('table', { className: 'table table-sm rooms' },
-      el('colgroup', {}, el('col', { className: 'first' }), el('col'), ...(orderable ? [el('col', { className: 'stairs' })] : []), ...(several ? [el('col', { className: 'stairs' })] : [])),
+      el('colgroup', {}, el('col', { className: 'first' }), el('col'), ...(several ? [el('col', { className: 'stairs' })] : [])),
       el('thead', {}, el('tr', {}, ...heads)),
       roomRows);
 
@@ -482,9 +446,6 @@
         + (map.hasDock ? '' : ' On a map without a base station the robot cleans a room with stair detection on until it is inside it, then uses the room\'s setting.')));
     }
     body.append(el('div', { className: 'table-responsive' }, table));
-    if (orderable) {
-      body.append(el('p', { className: 'hint mt-2 mb-0', textContent: 'Order: pick a position to clean rooms in that order; the others move along. Rooms left on Auto come after, nearest first (starting with the room with the starting point if none are ordered).' }));
-    }
     return { body, title, badges };
   }
 

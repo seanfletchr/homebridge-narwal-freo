@@ -28,18 +28,13 @@ test('rooms: distance between rooms is edge to edge, so the nearest room can be 
   assert.deepEqual(nearestFirst(shape, [3, 1, 2], { x: 3, y: 0 }), [2, 1, 3]);
 });
 
-test('rooms: an order from the settings goes first, the rest follow nearest first, rooms without floor last', () => {
-  assert.deepEqual(nearestFirst(shape, [1, 2, 3], { x: 0, y: 0 }, [3, 1]), [3, 1, 2]);
-  assert.deepEqual(nearestFirst(shape, [1, 2, 3], { x: 0, y: 0 }, [2]), [2, 1, 3]);
-  assert.deepEqual(nearestFirst(shape, [1, 9, 3], { x: 0, y: 0 }, [7, 3]), [3, 1, 9]);
-});
-
-test('maps keep a room order from the settings', () => {
+test('rooms: a roomOrder in a stored config doesn\'t change the automatic order', () => {
   const [, up] = buildFloors([
     { id: 1, hasDock: true, rooms: [{ id: 1, name: 'A' }] },
-    { id: 2, hasDock: false, rooms: [{ id: 4, name: 'B' }, { id: 5, name: 'C' }] },
-  ], 1, [{ id: 2, roomOrder: [5, '4', 'x'] }]);
-  assert.deepEqual(up.roomOrder, [5, 4]);
+    { id: 2, hasDock: false, rooms: [{ id: 1, name: 'B' }, { id: 2, name: 'C' }, { id: 3, name: 'D' }] },
+  ], 1, [{ id: 2, roomOrder: [3, 1] }]);
+  assert.equal(up.roomOrder, undefined);
+  assert.deepEqual(nearestFirst(shape, [1, 2, 3], { x: 0, y: 0 }), [1, 2, 3]);
 });
 
 // clean/plan/get reply: transport header, then { 1: 1, 2: plan { 3: mode, 9: { 1: room } … } … }.

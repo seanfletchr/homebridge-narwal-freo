@@ -11,8 +11,7 @@
   security hold stays in force until it arrives. Carry it back onto its base and the plugin switches it to
   the main map.
 - New: the rooms of a secondary map are cleaned like the Freo does on the main map: the room with the map's
-  starting point first, then always the nearest room left. To choose the order yourself, set it per map on the
-  settings page (Order column: pick a position per room); rooms left on Auto come after.
+  starting point first, then always the nearest room left.
 - New: you can go straight from one secondary map to another, or down to the main map without using the
   base: carry the robot to the next map's starting point and pick the rooms in the Home app. A start from
   Siri or an automation, which picks no rooms, still needs the robot on its base first.
@@ -110,7 +109,7 @@
   left to end.
 - Changed: the robot being sent back to its base from the Narwal app or its button is logged as "Returning
   to its base (started outside the Home app)" instead of "Cleaning started outside the Home app".
-- Changed: the settings page lists each map and its rooms with name fields, an Order column and a "Detect
+- Changed: the settings page lists each map and its rooms with name fields and a "Detect
   stairs" switch per room.
 - New: the log says when the configured region is unknown, instead of signing in to the US region without a
   word. (Thanks @linuxliam)

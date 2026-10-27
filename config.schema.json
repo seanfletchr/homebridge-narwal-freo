@@ -81,14 +81,6 @@
                     "default": true,
                     "description": "Turn off only on maps with no stairs going down. The plugin sets the robot to this before every clean on the map; each room can differ (see the rooms below)."
                   },
-                  "roomOrder": {
-                    "title": "Room order",
-                    "type": "array",
-                    "description": "Only for a secondary map: the rooms' Narwal IDs in the order they are cleaned (set on the settings page). Picked rooms follow this order; rooms not listed come after, nearest first. Without it the room with the starting point comes first, then the nearest one.",
-                    "items": {
-                      "type": "integer"
-                    }
-                  },
                   "rooms": {
                     "title": "Rooms",
                     "type": "array",

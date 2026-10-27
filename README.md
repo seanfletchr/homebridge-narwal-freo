@@ -255,9 +255,7 @@ or an automation uses the rooms picked last, so pick them in the Home app first)
 - The robot cleans the rooms one by one, the way it works on the main map: first the room that has the
   map's starting point, then always the nearest room left (measured edge to edge, so a long corridor
   counts as next to every room along it). If the starting point is in none of the picked rooms, the
-  nearest room goes first. To choose the order yourself, set it per map on the settings page (the
-  `roomOrder` of the map in `config.json`): picked rooms follow it, and rooms it doesn't list come
-  after, nearest first. The log shows the order ("Rooms on Upstairs in this order: …").
+  nearest room goes first. The log shows the order ("Rooms on Upstairs in this order: …").
 - When the last is done it goes back to the starting point by itself: the tile shows Returning on the
   way and Stopped there, with no error. Pause, Return to dock, Stop, an error or losing the connection
   end the rest of the list, and the robot stays where it is.
@@ -282,8 +280,7 @@ robot is on its base is refused ("Carry the Freo to Upstairs's starting point fi
 turns off the Narwal app's "switch to the main map after cleaning" on purpose (see above).
 
 In `config.json`, a robot's `maps` lists the entries you changed (`id` is the map's number on the
-robot; room `id` is the room's number on that map; a room's `stairDetection` overrides its map's;
-`roomOrder` lists room ids in the order to clean them on a secondary map); the settings page writes
+robot; room `id` is the room's number on that map; a room's `stairDetection` overrides its map's); the settings page writes
 them for you.
 
 On the main map, picked rooms are sent in the order of the room plan saved in the Narwal app for the

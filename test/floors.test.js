@@ -71,8 +71,3 @@ test('a room\'s stair detection is its own, else its floor\'s', () => {
   assert.deepEqual(main.rooms.map(r => r.stairDetection), [false, true]);
   assert.deepEqual(up.rooms.map(r => r.stairDetection), [true, true, true]);
 });
-
-test('a configured room order is read without duplicates (first occurrence kept)', () => {
-  const [, up] = buildFloors(maps, 1, [{ id: 2, roomOrder: [3, '1', 3, 1, 2] }]);
-  assert.deepEqual(up.roomOrder, [3, 1, 2]);
-});
