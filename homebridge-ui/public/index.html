@@ -389,13 +389,18 @@
     let floorOn = saved.stairDetection !== false;
     const followers = [];
     const roomRows = el('tbody');
-    // Cleaning order of a secondary map's rooms (a number per room; blank = after the numbered ones, nearest first).
+    // Cleaning order of a secondary map's rooms: the ids in order (no duplicates); rooms left on Auto come after.
     const orderable = !map.hasDock && map.rooms.length > 1;
-    const orders = new Map((saved.roomOrder ?? []).map((id, i) => [Number(id), i + 1]));
+    const known = new Set(map.rooms.map(r => r.id));
+    const ordered = [...new Set((saved.roomOrder ?? []).map(Number))].filter(id => known.has(id));
+    const orderSelects = new Map();
+    const showOrder = () => {
+      for (const [id, select] of orderSelects) {
+        select.value = String(ordered.indexOf(id) + 1); // 0 = Auto
+      }
+    };
     const saveOrder = () => setMap(serial, map.id, (m) => {
-      const ids = map.rooms.filter(r => orders.has(r.id))
-        .sort((a, b) => orders.get(a.id) - orders.get(b.id)).map(r => r.id);
-      if (ids.length) { m.roomOrder = ids; } else { delete m.roomOrder; }
+      if (ordered.length) { m.roomOrder = [...ordered]; } else { delete m.roomOrder; }
     });
     for (const room of map.rooms) {
       const savedRoom = saved.rooms?.find(r => Number(r.id) === room.id);
@@ -406,15 +411,20 @@
         }))),
       ];
       if (orderable) {
-        const number = el('input', { className: 'form-control form-control-sm', type: 'number', min: 1, max: map.rooms.length, step: 1,
-          value: orders.get(room.id) ?? '', placeholder: 'Auto', title: `Cleaning order of ${room.name}` });
-        number.setAttribute('aria-label', `Cleaning order of ${room.name}`);
-        number.addEventListener('change', () => {
-          const n = Math.round(Number(number.value));
-          if (number.value === '' || !(n >= 1)) { orders.delete(room.id); number.value = ''; } else { orders.set(room.id, Math.min(n, map.rooms.length)); number.value = orders.get(room.id); }
+        const select = el('select', { className: 'form-control form-control-sm', title: `Cleaning order of ${room.name}` },
+          el('option', { value: '0', textContent: 'Auto' }),
+          ...map.rooms.map((_, i) => el('option', { value: String(i + 1), textContent: String(i + 1) })));
+        select.setAttribute('aria-label', `Cleaning order of ${room.name}`);
+        orderSelects.set(room.id, select);
+        select.addEventListener('change', () => {
+          const n = Number(select.value);
+          const at = ordered.indexOf(room.id);
+          if (at >= 0) { ordered.splice(at, 1); }
+          if (n >= 1) { ordered.splice(Math.min(n - 1, ordered.length), 0, room.id); }
+          showOrder();
           return saveOrder();
         });
-        cells.push(el('td', {}, number));
+        cells.push(el('td', {}, select));
       }
       if (several) {
         const box = el('input', { className: 'form-check-input', type: 'checkbox', title: `Detect stairs in ${room.name}`,
@@ -432,6 +442,7 @@
       }
       roomRows.append(el('tr', {}, ...cells));
     }
+    showOrder();
     const heads = [el('th', { textContent: 'Narwal app' }), el('th', { textContent: 'Home app' })];
     if (orderable) {
       heads.push(el('th', { textContent: 'Order' }));
@@ -472,7 +483,7 @@
     }
     body.append(el('div', { className: 'table-responsive' }, table));
     if (orderable) {
-      body.append(el('p', { className: 'hint mt-2 mb-0', textContent: 'Order: number the rooms to clean them in that order. Left on Auto, the room with the starting point comes first, then the nearest one.' }));
+      body.append(el('p', { className: 'hint mt-2 mb-0', textContent: 'Order: pick a position to clean rooms in that order; the others move along. Rooms left on Auto come after, nearest first (starting with the room with the starting point if none are ordered).' }));
     }
     return { body, title, badges };
   }

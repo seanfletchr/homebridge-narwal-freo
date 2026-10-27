@@ -12,7 +12,7 @@
   the main map.
 - New: the rooms of a secondary map are cleaned like the Freo does on the main map: the room with the map's
   starting point first, then always the nearest room left. To choose the order yourself, set it per map on the
-  settings page (Order column); rooms you leave out come after.
+  settings page (Order column: pick a position per room); rooms left on Auto come after.
 - New: you can go straight from one secondary map to another, or down to the main map without using the
   base: carry the robot to the next map's starting point and pick the rooms in the Home app. A start from
   Siri or an automation, which picks no rooms, still needs the robot on its base first.
