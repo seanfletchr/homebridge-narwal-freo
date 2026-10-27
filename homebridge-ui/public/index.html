@@ -24,7 +24,7 @@
   .card-body > :last-child, .section > :last-child, .sub > :last-child, .settings > :last-child,
   .box-body > :last-child, details > :last-child { margin-bottom: 0 !important; }
 
-  /* Collapsible boxes: floors and clean-mode groups. */
+  /* Collapsible boxes: maps and clean-mode groups. */
   .box { border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 0.375rem; padding: 0.25rem 0.75rem; margin-top: 0.5rem; }
   .box > summary { font-weight: 500; }
   .box-body { padding: 0.5rem 0 0.75rem; }
@@ -44,6 +44,7 @@
   .rooms { table-layout: fixed; min-width: 22rem; margin-bottom: 0; }
   .rooms td, .rooms th { vertical-align: middle; }
   .rooms col.first { width: 12rem; }
+  .rooms col.stairs { width: 6.5rem; }
 </style>
 
 <div class="card card-body mb-3">
@@ -156,7 +157,7 @@
   const CHOICES = {
     task: [['vacuum_and_mop', 'Vacuum and Mop'], ['vacuum_then_mop', 'Vacuum then Mop'], ['freo_mind', 'Freo Mind']],
     passes: [['app', 'Default'], ['1', '1'], ['2', '2'], ['3', '3']],
-    suction: [['app', 'Default'], ['quiet', 'Quiet'], ['standard', 'Standard'], ['strong', 'Strong']],
+    suction: [['app', 'Default'], ['quiet', 'Quiet'], ['standard', 'Standard'], ['strong', 'Strong'], ['max', 'Max']],
     water: [['app', 'Default'], ['dry', 'Slightly dry'], ['standard', 'Standard'], ['wet', 'Slightly wet']],
   };
   const el = (tag, props = {}, ...children) => {
@@ -334,7 +335,10 @@
       const list = entry.maps ?? [];
       const map = list.find(m => Number(m.id) === mapId) ?? { id: mapId };
       fn(map);
-      map.rooms = (map.rooms ?? []).filter(r => r.name);
+      map.rooms = (map.rooms ?? []).filter(r => r.name || typeof r.stairDetection === 'boolean');
+      if (!map.roomOrder?.length) {
+        delete map.roomOrder;
+      }
       if (!map.rooms.length) {
         delete map.rooms;
       }
@@ -344,6 +348,15 @@
       if (!entry.maps.length) {
         delete entry.maps;
       }
+    });
+  }
+
+  /** Change one room's entry in a map's `rooms` setting (see setMap); an entry with nothing in it goes. */
+  function setRoom(serial, mapId, roomId, fn) {
+    return setMap(serial, mapId, (map) => {
+      const room = (map.rooms ?? []).find(r => Number(r.id) === roomId) ?? { id: roomId };
+      fn(room);
+      map.rooms = [...(map.rooms ?? []).filter(r => r !== room), room];
     });
   }
 
@@ -367,25 +380,68 @@
     stairBadge.hidden = !(several && saved.stairDetection === false);
     const badges = [];
     if (!map.hasDock) {
-      badges.push(pill('No base station'));
+      badges.push(pill('Secondary map'));
     }
     badges.push(stairBadge);
 
+    // What the page shows (the config is re-read for every change): the floor's stair detection, and the
+    // rooms that follow it, so the floor's switch can move them.
+    let floorOn = saved.stairDetection !== false;
+    const followers = [];
     const roomRows = el('tbody');
+    // Cleaning order of a secondary map's rooms (a number per room; blank = after the numbered ones, nearest first).
+    const orderable = !map.hasDock && map.rooms.length > 1;
+    const orders = new Map((saved.roomOrder ?? []).map((id, i) => [Number(id), i + 1]));
+    const saveOrder = () => setMap(serial, map.id, (m) => {
+      const ids = map.rooms.filter(r => orders.has(r.id))
+        .sort((a, b) => orders.get(a.id) - orders.get(b.id)).map(r => r.id);
+      if (ids.length) { m.roomOrder = ids; } else { delete m.roomOrder; }
+    });
     for (const room of map.rooms) {
-      const chosen = saved.rooms?.find(r => Number(r.id) === room.id)?.name;
-      roomRows.append(el('tr', {},
+      const savedRoom = saved.rooms?.find(r => Number(r.id) === room.id);
+      const cells = [
         el('td', { textContent: room.name }),
-        el('td', {}, nameField(chosen, room.name, name => setMap(serial, map.id, m => {
-          m.rooms = (m.rooms ?? []).filter(r => Number(r.id) !== room.id);
-          if (name) {
-            m.rooms.push({ id: room.id, name });
-          }
-        })))));
+        el('td', {}, nameField(savedRoom?.name, room.name, name => setRoom(serial, map.id, room.id, (r) => {
+          if (name) { r.name = name; } else { delete r.name; }
+        }))),
+      ];
+      if (orderable) {
+        const number = el('input', { className: 'form-control form-control-sm', type: 'number', min: 1, max: map.rooms.length, step: 1,
+          value: orders.get(room.id) ?? '', placeholder: 'Auto', title: `Cleaning order of ${room.name}` });
+        number.setAttribute('aria-label', `Cleaning order of ${room.name}`);
+        number.addEventListener('change', () => {
+          const n = Math.round(Number(number.value));
+          if (number.value === '' || !(n >= 1)) { orders.delete(room.id); number.value = ''; } else { orders.set(room.id, Math.min(n, map.rooms.length)); number.value = orders.get(room.id); }
+          return saveOrder();
+        });
+        cells.push(el('td', {}, number));
+      }
+      if (several) {
+        const box = el('input', { className: 'form-check-input', type: 'checkbox', title: `Detect stairs in ${room.name}`,
+          checked: typeof savedRoom?.stairDetection === 'boolean' ? savedRoom.stairDetection : floorOn });
+        box.setAttribute('aria-label', `Detect stairs in ${room.name}`);
+        const follower = { box, own: typeof savedRoom?.stairDetection === 'boolean' && savedRoom.stairDetection !== floorOn };
+        box.addEventListener('change', () => {
+          follower.own = box.checked !== floorOn; // the same as the floor's: nothing to remember
+          return setRoom(serial, map.id, room.id, (r) => {
+            if (follower.own) { r.stairDetection = box.checked; } else { delete r.stairDetection; }
+          });
+        });
+        followers.push(follower);
+        cells.push(el('td', { className: 'text-center' }, box));
+      }
+      roomRows.append(el('tr', {}, ...cells));
+    }
+    const heads = [el('th', { textContent: 'Narwal app' }), el('th', { textContent: 'Home app' })];
+    if (orderable) {
+      heads.push(el('th', { textContent: 'Order' }));
+    }
+    if (several) {
+      heads.push(el('th', { className: 'text-center', textContent: 'Detect stairs' }));
     }
     const table = el('table', { className: 'table table-sm rooms' },
-      el('colgroup', {}, el('col', { className: 'first' }), el('col')),
-      el('thead', {}, el('tr', {}, el('th', { textContent: 'Narwal app' }), el('th', { textContent: 'Home app' }))),
+      el('colgroup', {}, el('col', { className: 'first' }), el('col'), ...(orderable ? [el('col', { className: 'stairs' })] : []), ...(several ? [el('col', { className: 'stairs' })] : [])),
+      el('thead', {}, el('tr', {}, ...heads)),
       roomRows);
 
     const body = el('div', { className: 'box-body' },
@@ -394,12 +450,30 @@
           if (name) { m.name = name; } else { delete m.name; }
         }), name => { title.textContent = name || map.name; })));
     if (several) {
-      body.append(switchRow('Detect stairs', saved.stairDetection !== false, on => {
+      body.append(switchRow('Detect stairs', floorOn, async (on) => {
         stairBadge.hidden = on;
-        return setMap(serial, map.id, m => { if (on) { delete m.stairDetection; } else { m.stairDetection = false; } });
-      }, 'Only turn this off on floors with no stairs going down.'));
+        floorOn = on;
+        await setMap(serial, map.id, (m) => {
+          if (on) { delete m.stairDetection; } else { m.stairDetection = false; }
+          // Rooms with their own setting keep it; the others follow the floor.
+          for (const r of m.rooms ?? []) {
+            if (r.stairDetection === on) { delete r.stairDetection; }
+          }
+        });
+        for (const f of followers) {
+          if (!f.own) {
+            f.box.checked = on;
+          } else if (f.box.checked === on) {
+            f.own = false; // now the same as the floor's, so it follows it
+          }
+        }
+      }, 'Only turn this off on maps with no stairs going down. Each room below can differ.'
+        + (map.hasDock ? '' : ' On a map without a base station the robot cleans a room with stair detection on until it is inside it, then uses the room\'s setting.')));
     }
     body.append(el('div', { className: 'table-responsive' }, table));
+    if (orderable) {
+      body.append(el('p', { className: 'hint mt-2 mb-0', textContent: 'Order: number the rooms to clean them in that order. Left on Auto, the room with the starting point comes first, then the nearest one.' }));
+    }
     return { body, title, badges };
   }
 
@@ -413,10 +487,10 @@
     }
     const several = maps.length > 1;
     const box = el('div', { className: 'section' },
-      el('h6', { textContent: several ? 'Floors' : 'Rooms' }),
-      el('p', { className: 'hint mt-1 mb-2', textContent: (several ? 'Names and stair detection per floor. ' : 'Names per room. ')
+      el('h6', { textContent: several ? 'Maps' : 'Rooms' }),
+      el('p', { className: 'hint mt-1 mb-2', textContent: (several ? 'Names per map and room, stair detection per map and room. A map without a base station is a secondary map: it is cleaned room by room, vacuum only. ' : 'Names per room. ')
         + 'Map changes you make in the Narwal app show up here automatically.' }));
-    for (const map of maps) {
+    for (const map of [...maps].sort((a, b) => a.id - b.id)) { // in map id order, like the Home app
       const floor = floorBlock(robot.serial, entry, map, several);
       box.append(several
         ? el('details', { className: 'box', open: false },
@@ -442,8 +516,10 @@
         for (const field of fields) {
           if (value.task === 'freo_mind' && field !== 'task') {
             // Freo Mind picks its own passes, suction and water.
-            cells.push(el('td', { className: 'hint', colSpan: fields.length - 1, textContent: 'The robot decides' }));
-            break;
+            if (!cells.some(c => c.className === 'hint')) {
+              cells.push(el('td', { className: 'hint', colSpan: fields.length - 1, textContent: 'The robot decides' }));
+            }
+            continue;
           }
           cells.push(el('td', {}, select(field, value[field] ?? 'app', async v => {
             entry = await setMode(serial, key, field, v);
@@ -526,7 +602,7 @@
     const modes = el('div', { className: 'section' },
       el('h6', { textContent: 'Clean modes' }),
       el('p', { className: 'hint mt-1 mb-2', textContent: 'Choose what each clean mode in the Home app does. Default uses '
-        + 'each room\'s settings from the Narwal app.' }));
+        + 'what the Narwal app\'s Vacuum / Mop tile is set to (standard on secondary maps).' }));
     for (const g of GROUPS) {
       modes.append(modeGroup(serial, entry, g));
     }

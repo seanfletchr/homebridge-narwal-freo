@@ -71,3 +71,19 @@ test('unwrapTransport rejects a bad marker and a truncated header', () => {
 test('fieldBytes encodes tag, length and payload', () => {
   assert.deepEqual([...fieldBytes(1, Buffer.from([9, 9]))], [(1 << 3) | 2, 2, 9, 9]);
 });
+
+import { easyCleanBody, zoneCleanBody } from '../lib/protocol.js';
+import { decodeFields as decode, getInt as geti } from '../lib/proto.js';
+
+test('clean start bodies name the map in field 2', () => {
+  for (const mapId of [1, 2, 3]) {
+    assert.equal(geti(decode(easyCleanBody([4], 1, {}, {}, mapId)), 2), mapId);
+    const zone = { roomId: 4, points: [[0, 0], [8, 0], [8, 8], [0, 8]], box: [[0, 0], [8, 0], [8, 8], [0, 8]] };
+    assert.equal(geti(decode(zoneCleanBody([zone], 1, {}, {}, mapId)), 2), mapId);
+  }
+});
+
+test('a clean start without a map id throws', () => {
+  assert.throws(() => easyCleanBody([4], 1, {}, {}), /map/);
+  assert.throws(() => zoneCleanBody([], 1, {}, {}, undefined), /map/);
+});

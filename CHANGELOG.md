@@ -1,46 +1,123 @@
 # Changelog
 
-## Unreleased
+## 0.6.2
+
+### Multiple maps (still in development)
+
+- New: **cleaning a secondary map** (a map without a base station) works the way a person would do it. Put the
+  robot on the map's starting point (the P in the Narwal app), pick the map and rooms in the Home app and start.
+  The robot cleans the rooms one by one and, when the last is done, drives back to the starting point by
+  itself and stops there. The tile shows Returning on the way and Stopped there, without an error, and the
+  security hold stays in force until it arrives. Carry it back onto its base and the plugin switches it to
+  the main map.
+- New: the rooms of a secondary map are cleaned like the Freo does on the main map: the room with the map's
+  starting point first, then always the nearest room left. To choose the order yourself, set it per map on the
+  settings page (Order column); rooms you leave out come after.
+- New: you can go straight from one secondary map to another, or down to the main map without using the
+  base: carry the robot to the next map's starting point and pick the rooms in the Home app. A start from
+  Siri or an automation, which picks no rooms, still needs the robot on its base first.
+- New: if the battery drops to 10% during a clean of a secondary map (or the robot ends a room because its
+  battery is low), the plugin ends the clean, sends the robot back to the starting point and logs the rooms
+  that were left. The tile shows a low battery error until the robot is on its base or a new clean starts.
+- New: **stair detection per room** (a "Detect stairs" switch for every room of a robot with several maps; it
+  follows the map's switch until you change it). On the main map one job covers all the picked rooms, so it
+  is on if any of them wants it. On a secondary map each room is its own job: it starts with stair
+  detection on, and in a room set to off the plugin turns it off a few seconds after the robot is inside,
+  and back on as it leaves, is paused or the job ends. It is never off between rooms, on the way to the
+  starting point or after the clean. If the robot doesn't take a change, it stays on.
+- Changed: **the plugin owns the map.** On a robot with several maps it turns off the Narwal app's
+  "Automatically switch to the main map after cleaning" once and leaves it off (a robot with one map keeps
+  its setting). Whenever the robot is on its base the plugin switches it to the main map if it is on
+  another one, and says so in the log; a failed switch is tried again every minute.
+- Changed: the plugin goes by what it knows about where the robot is: the map it started work on, until it
+  is back on its base, else the main map. A start with no rooms picked uses the rooms picked last, else the
+  map the robot was last sent to, else the main map.
+- Changed: a room pick is for one clean. When a clean is over, the Home app goes back to the main map with
+  every room picked, so a start from Siri or an automation cleans the whole main map (it is still refused
+  while the robot is on a secondary map).
+- New: clear refusals on the tile and in the log that send nothing to the robot: "Put the Freo on its base"
+  (Return to dock while it stands idle on a secondary map), "The Freo is on Upstairs: put it on its base
+  first" (a clean on another map while it is on a secondary map) and "Carry the Freo to Upstairs's starting
+  point first" (a clean on a secondary map while the robot is on its base).
+- Changed: **secondary maps are vacuum only.** A Mop, Vacuum and Mop or Freo Mind start there is refused
+  ("Upstairs: vacuum only"), because there is no base station to wash the mops.
+- Changed: a room keeps its plain name unless a room on another map has the same name; then the room on the
+  secondary map shows its map's name in brackets, "Corridor (Upstairs)". Room ids are unchanged, so scenes
+  and automations keep working.
+- Changed: maps are shown in the order of their map numbers on the robot (Cleaning Map picker, settings page,
+  log), and the plugin says "map" instead of "floor" everywhere.
+- Changed: the return to a map's starting point uses a smaller spot (about 20 cm), so the robot ends closer
+  to the P; if the robot refuses it, the plugin tries a bigger one once. It stops as soon as it arrives.
+- Fixed: cleans on a third (or later) map ran on the wrong map: the start named map 2 for every secondary
+  map. The start now names the map it is meant for.
+- Fixed: a clean on a secondary map was stopped seconds after it started ("placed itself on …") while the
+  Narwal app was open, because the robot's answer to the app's own map request was taken for the plugin's.
+  Only answers to the plugin's own requests count now, and the plugin asks twice before stopping a job.
+- New: the Freo Cleaning sensor stays Detected through a whole clean of a secondary map, from the first room
+  until the robot is back at the starting point, instead of dropping between rooms.
+- Fixed: the trip back to the starting point and the room list always end: when the robot reports an error,
+  is back on its base, hasn't set off within a minute, or has been idle for a minute without finishing. Return
+  to dock on a secondary map could stay "Returning" for good after an error such as a missing dust bin, with
+  Start taken for a Resume and the Narwal app's map setting left off.
+
+### Cleaning
+
+- New: suction can be set to Max (Quiet, Standard, Strong, Max) in the clean modes. Existing settings are
+  unchanged.
+- Changed: a main map clean sends the picked rooms in the order of the room plan saved in the Narwal app for
+  that mode (rooms the plan doesn't list follow); the start line in the log shows the order.
+- Changed: the settings page and README explain what Default means for passes, suction and water: what the
+  Narwal app has saved for that mode (the same for every room), standard on a secondary map.
+- New: the log says how much battery a clean used ("battery 74% → 52%"): in the clean report for a main map
+  clean, and in one line at the end of a room list and its trip back.
+- New: stair detection is turned back on after every clean, so a robot carried to another level is never left
+  without it. A map or room set to have it off still cleans without it.
+- Changed: while the base dries the mops the Home app shows that (Cleaning Mop) instead of Charging.
+
+### Fixes
 
 - Fixed: the tile no longer gets stuck on Paused (with only Resume) when the robot is lifted out of its base
   while the base dries the mops: it shows Stopped and you can start a clean.
-- New: when the robot drives back to its base by itself (for example after the Narwal app's or the robot
-  button's Resume on a paused mop drying), the plugin asks the security system first, like for any other
-  move, and pauses the robot if there is no OK.
-- New: stair detection is turned back on after every clean, so a robot carried upstairs is never left
-  without it. A floor set to have it off still cleans without it.
-- Changed: while the base dries the mops the Home app shows that (Cleaning Mop) instead of Charging.
-- New: the tile shows an error, and the log a warning, when the Freo can't get back to its base. After
-  a clean, Return to dock or a mop wash the robot is expected home within a few times its usual time (the
-  plugin learns this from your earlier returns; 10 minutes until it has), so an unplugged base station
-  or a blocked path now shows "Failed to find charging dock" instead of a tile that keeps saying
-  Returning. The error clears when the robot reaches the base or starts something new.
+- New: when the robot drives back to its base by itself (for example after Resume on a paused mop drying in
+  the Narwal app or on the robot), the plugin asks the security system first, like for any other move, and
+  pauses the robot if there is no OK.
+- New: the tile shows an error, and the log a warning, when the Freo can't get back to its base. After a
+  clean, Return to dock or a mop wash the robot is expected home within a few times its usual time (the
+  plugin learns this from your earlier returns; 10 minutes until it has), so an unplugged base station or
+  a blocked path shows "Failed to find charging dock" instead of a tile that keeps saying Returning. It
+  clears when the robot reaches the base or starts something new.
 - New: the tile shows an error when the robot stops answering. A robot that goes quiet while away from its
   base is woken once and then shown with a low battery error (its battery has most likely run flat), also
   after a Homebridge restart; one that hasn't answered at all since Homebridge started shows "unable to
   complete operation" instead of Ready. It clears as soon as the robot reports again.
 - Fixed: a robot charging from 0% showed 100% (and Docked instead of Charging) in the Home app.
 - Fixed: after a restart the Home app could show 100% and not charging until the next restart: the vacuum was
-  published with made-up starting values. It is now published from the robot's first status (battery unknown
-  if the robot hasn't reported within 30 seconds).
-- Fixed: a robot charging in its base could show as Stopped and not charging when it didn't send its docked flag.
-- Fixed: Return to dock on a floor without a base could stay "Returning" for good if the robot stopped with
-  an error on the way (a missing dust bin, say): the Home app then showed the wrong state, Start was taken
-  for a Resume, and the Narwal app's "switch to the main map after cleaning" setting stayed off. The trip
-  back to the starting point now always ends: when the robot reports an error, is back on its base, hasn't
-  set off within a minute, or has been idle for a minute without finishing; and a new clean, or a Home app
-  Pause or Resume while nothing is really running, treats it as over. A room queue also ends when the
-  robot is on its base or reports an error between rooms.
-- On start-up the "switch to the main map" setting is turned back on if the plugin had turned it off and
-  the robot is idle.
-- Fixed: on some Freos every room showed as "Room", "Room 2", … instead of its Narwal app name. Room
-  names now also come from the robot's current map, which carries them on every Freo. Room ids, and so
-  Home scenes and automations, don't change. README: new "Room names" section. (Thanks @linuxliam)
-- The log now says when the configured region is unknown, instead of signing in to the US region without
-  a word. (Thanks @linuxliam)
-- The "Matter is not enabled" error now shows the `matter` block to add to the child bridge. (Thanks
+  published with made-up starting values. It is now published from the robot's first status (battery
+  unknown if the robot hasn't reported within 30 seconds).
+- Fixed: a robot charging in its base could show as Stopped and not charging when it didn't send its docked
+  flag.
+- Fixed: on some Freos every room showed as "Room", "Room 2", … instead of its Narwal app name. Room names
+  now also come from the robot's current map, which carries them on every Freo. Room ids, and so Home
+  scenes and automations, don't change. (Thanks @linuxliam)
+
+### Settings & logs
+
+- Changed: with more than one map, every log line that names rooms also names their map, and the log says
+  whether stair detection is on or off whenever a clean is about to move the robot. Map switches are logged
+  at info level.
+- Changed: the log names the room when stair detection goes back on after it ("Stair detection back on
+  (Kitchen done)") and no longer says "Ending the clean…" when the rooms are done and there is nothing
+  left to end.
+- Changed: the robot being sent back to its base from the Narwal app or its button is logged as "Returning
+  to its base (started outside the Home app)" instead of "Cleaning started outside the Home app".
+- Changed: the settings page lists each map and its rooms with name fields, an Order column and a "Detect
+  stairs" switch per room.
+- New: the log says when the configured region is unknown, instead of signing in to the US region without a
+  word. (Thanks @linuxliam)
+- New: the "Matter is not enabled" error shows the `matter` block to add to the child bridge. (Thanks
   @linuxliam)
-- README: new "First-time setup" section (enabling Matter, pairing the vacuum). (Thanks @linuxliam)
+- README: new "First-time setup", "Room names" and "Multiple maps" sections (how to clean another map, known
+  gaps). (Thanks @linuxliam)
 - Development: a small test suite (`npm test`) and a GitHub Actions workflow. (Thanks @linuxliam)
 
 ## 0.6.1
