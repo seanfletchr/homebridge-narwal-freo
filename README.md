@@ -177,7 +177,11 @@ floor's starting point (the P on the Narwal app's map) to avoid this.
   dark floors and toe kicks can cause false "robot is stuck" errors. It is a robot-wide setting in the
   Narwal app, so the plugin sets it again before every clean, and if something else turns it off
   while the robot cleans a floor that needs it, the robot is paused (the tile shows an error;
-  Resume turns it back on). A robot with a single map is left alone unless you choose a value.
+  Resume turns it back on). After each clean the plugin turns stair detection back on, so a robot you
+  carry upstairs afterwards has it. A robot with a single map is left alone unless you choose a value.
+- **Don't use the Narwal app's "End Mop Wash & Dry" while the robot is off its base:** the robot then
+  drives back to its base by itself (the plugin asks the security system first and pauses it without
+  the OK, but it is easy to forget stairs).
 - **Floors without a base station:** Narwal only offers zone cleaning on them, so the plugin cleans
   each room you pick as a zone shaped like the room, one room at a time (the Narwal app takes one
   zone per job): the room the robot is in (or nearest to) goes first and then the nearest remaining

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Fixed: the tile no longer gets stuck on Paused (with only Resume) when the robot is lifted out of its base
+  while the base dries the mops: it shows Stopped and you can start a clean.
+- New: when the robot drives back to its base by itself (for example after the Narwal app's or the robot
+  button's Resume on a paused mop drying), the plugin asks the security system first, like for any other
+  move, and pauses the robot if there is no OK.
+- New: stair detection is turned back on after every clean, so a robot carried upstairs is never left
+  without it. A floor set to have it off still cleans without it.
+- Changed: while the base dries the mops the Home app shows that (Cleaning Mop) instead of Charging.
 - New: the tile shows an error, and the log a warning, when the Freo can't get back to its base. After
   a clean, Return to dock or a mop wash the robot is expected home within a few times its usual time (the
   plugin learns this from your earlier returns; 10 minutes until it has), so an unplugged base station
